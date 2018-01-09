@@ -4,6 +4,8 @@ import (
 	"net/http"
 	"time"
 
+	"flag"
+
 	"github.com/Sirupsen/logrus"
 	"github.com/go-chi/chi"
 	"github.com/go-chi/chi/middleware"
@@ -12,12 +14,19 @@ import (
 	"github.com/utrack/woofer/service"
 )
 
+var (
+	listenPort   = flag.String("listen", ":3333", "HTTP address to listen on")
+	migrations   = flag.String("migrations", "../../migrations", "Path to migrations")
+	sqlitestring = flag.String("sqlitedb", "./db.sqlite", "Path to SQLite DB")
+)
+
 func main() {
 	logrus.Info("Wiring up services...")
+	flag.Parse()
 	svc, err := service.Bootstrap(
 		service.Config{
-			SQLiteConnString: "./db.sqlite",
-			SQLiteMigrations: "../../migrations",
+			SQLiteConnString: *sqlitestring,
+			SQLiteMigrations: *migrations,
 		},
 	)
 	if err != nil {
@@ -54,7 +63,6 @@ func main() {
 		r.Get("/subscriptions", hdl.Subscriptions)
 		r.Get("/subscribers", hdl.Subscribers)
 	})
-	logrus.Info("Listening on :3333")
-	http.ListenAndServe(":3333", r)
-
+	logrus.Info("Listening on " + *listenPort)
+	http.ListenAndServe(*listenPort, r)
 }
