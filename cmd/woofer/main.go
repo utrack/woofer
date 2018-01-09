@@ -17,6 +17,7 @@ func main() {
 	svc, err := service.Bootstrap(
 		service.Config{
 			SQLiteConnString: "./db.sqlite",
+			SQLiteMigrations: "../../migrations",
 		},
 	)
 	if err != nil {

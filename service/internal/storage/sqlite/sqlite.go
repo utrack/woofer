@@ -8,6 +8,9 @@ import (
 	"sync"
 
 	"github.com/jmoiron/sqlx"
+	"github.com/mattes/migrate"
+	"github.com/mattes/migrate/database/sqlite3"
+	_ "github.com/mattes/migrate/source/file"
 	"github.com/pkg/errors"
 )
 
@@ -21,11 +24,27 @@ type Storage struct {
 }
 
 // New creates a new sqlite-backed storage.
-func New(connstring string) (*Storage, error) {
+func New(connstring string, migrations string) (*Storage, error) {
 	db, err := sqlx.Connect("sqlite3", connstring)
 	if err != nil {
 		return nil, errors.Wrap(err, "couldn't init sqlite3 connection")
 	}
+
+	dri, err := sqlite3.WithInstance(db.DB, &sqlite3.Config{})
+	if err != nil {
+		return nil, errors.Wrap(err, "couldn't init migration driver")
+	}
+	m, err := migrate.NewWithDatabaseInstance(
+		"file://"+migrations,
+		"sqlite", dri)
+	if err != nil {
+		return nil, errors.Wrap(err, "couldn't create migration engine")
+	}
+	err = m.Steps(1)
+	if err != nil {
+		return nil, errors.Wrap(err, "couldn't run migrations")
+	}
+
 	c := &conn{sq: db}
 	return &Storage{
 		userStorage{

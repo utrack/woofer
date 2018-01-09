@@ -7,12 +7,13 @@ import (
 
 type Config struct {
 	SQLiteConnString string
+	SQLiteMigrations string
 }
 
 // Bootstrap returns a Woofer service.
 func Bootstrap(cfg Config) (*Woofer, error) {
 
-	storage, err := sqlite.New(cfg.SQLiteConnString)
+	storage, err := sqlite.New(cfg.SQLiteConnString, cfg.SQLiteMigrations)
 	if err != nil {
 		return nil, errors.Wrap(err, "storage init failed")
 	}
